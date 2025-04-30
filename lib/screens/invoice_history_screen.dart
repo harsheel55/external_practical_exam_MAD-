@@ -64,7 +64,10 @@ class InvoiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
       child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.push(
             context,
@@ -81,48 +84,50 @@ class InvoiceCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    invoice.invoiceNumber,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Text(
-                    dateFormat.format(invoice.dateTime),
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text('Customer: ${invoice.customerName}'),
-              Text('Items: ${invoice.products.length}'),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Total: ₹${invoice.grandTotal.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          invoice.invoiceNumber,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          dateFormat.format(invoice.dateTime),
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.share),
+                        icon: const Icon(Icons.share, color: Colors.blue),
                         onPressed: () async {
-                          final pdfFile = await PdfService.generateInvoice(invoice);
-                          if (!context.mounted) return;
-                          
-                          Share.shareXFiles(
-                            [XFile(pdfFile.path)],
-                            subject: 'Invoice ${invoice.invoiceNumber}',
-                          );
+                          try {
+                            final pdfFile = await PdfService.generateInvoice(invoice);
+                            if (!context.mounted) return;
+                            
+                            Share.shareXFiles(
+                              [XFile(pdfFile.path)],
+                              subject: 'Invoice ${invoice.invoiceNumber}',
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('PDF generation is not supported in web demo. Try on a mobile device.'),
+                                backgroundColor: Colors.orange,
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          }
                         },
                         tooltip: 'Share Invoice',
                       ),
@@ -132,6 +137,29 @@ class InvoiceCard extends StatelessWidget {
                         tooltip: 'Delete Invoice',
                       ),
                     ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Customer: ${invoice.customerName}',
+                style: const TextStyle(fontSize: 15),
+              ),
+              Text(
+                'Items: ${invoice.products.length}',
+                style: const TextStyle(fontSize: 15),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'Total: ₹${invoice.grandTotal.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.blue,
+                    ),
                   ),
                 ],
               ),

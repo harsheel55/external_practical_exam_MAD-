@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
-import '../services/database_helper.dart';
 
 class ProductProvider with ChangeNotifier {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Product> _products = [];
   bool _isLoading = false;
 
@@ -16,13 +14,46 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _products = await _dbHelper.getProducts();
+      // For now, we'll just use some sample products if the list is empty
+      if (_products.isEmpty) {
+        _addSampleProducts();
+      }
     } catch (e) {
       debugPrint('Error loading products: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void _addSampleProducts() {
+    // Add some sample products for testing
+    _products = [
+      Product(
+        id: const Uuid().v4(),
+        name: 'Laptop',
+        price: 45000,
+        gstPercentage: 18,
+      ),
+      Product(
+        id: const Uuid().v4(),
+        name: 'Mobile Phone',
+        price: 15000,
+        gstPercentage: 12,
+      ),
+      Product(
+        id: const Uuid().v4(),
+        name: 'Headphones',
+        price: 2000,
+        gstPercentage: 28,
+      ),
+      Product(
+        id: const Uuid().v4(),
+        name: 'Notebook',
+        price: 100,
+        gstPercentage: 5,
+      ),
+    ];
   }
 
   Future<bool> addProduct(String name, double price, double gstPercentage) async {
@@ -34,7 +65,6 @@ class ProductProvider with ChangeNotifier {
         gstPercentage: gstPercentage,
       );
 
-      await _dbHelper.insertProduct(product);
       _products.add(product);
       notifyListeners();
       return true;
@@ -46,13 +76,13 @@ class ProductProvider with ChangeNotifier {
 
   Future<bool> updateProduct(Product product) async {
     try {
-      await _dbHelper.updateProduct(product);
       final index = _products.indexWhere((p) => p.id == product.id);
       if (index != -1) {
         _products[index] = product;
         notifyListeners();
+        return true;
       }
-      return true;
+      return false;
     } catch (e) {
       debugPrint('Error updating product: $e');
       return false;
@@ -61,7 +91,6 @@ class ProductProvider with ChangeNotifier {
 
   Future<bool> deleteProduct(String id) async {
     try {
-      await _dbHelper.deleteProduct(id);
       _products.removeWhere((product) => product.id == id);
       notifyListeners();
       return true;

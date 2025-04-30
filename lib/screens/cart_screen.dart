@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../models/invoice.dart';
 import '../providers/cart_provider.dart';
+import '../providers/invoice_provider.dart';
 import '../services/pdf_service.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -208,20 +209,35 @@ class CartScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              final pdfFile = await PdfService.generateInvoice(invoice);
-              if (!context.mounted) return;
-              
-              Share.shareXFiles(
-                [XFile(pdfFile.path)],
-                subject: 'Invoice ${invoice.invoiceNumber}',
-              );
+              try {
+                final pdfFile = await PdfService.generateInvoice(invoice);
+                if (!context.mounted) return;
+                
+                Share.shareXFiles(
+                  [XFile(pdfFile.path)],
+                  subject: 'Invoice ${invoice.invoiceNumber}',
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('PDF generation is not supported in web demo. Try on a mobile device.'),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
             },
             child: const Text('Share PDF'),
           ),
           ElevatedButton(
             onPressed: () {
+              // Add the invoice to the provider before navigating
+              Provider.of<InvoiceProvider>(context, listen: false).addInvoice(invoice);
+              
               Navigator.pop(context);
               Provider.of<CartProvider>(context, listen: false).clearCart();
+              
               // Navigate to invoices tab
               DefaultTabController.of(context)?.animateTo(2);
             },

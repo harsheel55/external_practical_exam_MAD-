@@ -6,6 +6,7 @@ import '../providers/invoice_provider.dart';
 import 'product_screen.dart';
 import 'cart_screen.dart';
 import 'invoice_history_screen.dart';
+import 'add_product_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -100,7 +101,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
-              onPressed: () => _showAddProductDialog(context),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddProductScreen(),
+                  ),
+                );
+              },
               backgroundColor: Colors.blue.shade800,
               child: const Icon(Icons.add),
             )

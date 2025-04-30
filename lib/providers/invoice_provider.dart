@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/invoice.dart';
-import '../services/database_helper.dart';
 
 class InvoiceProvider with ChangeNotifier {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Invoice> _invoices = [];
   bool _isLoading = false;
 
@@ -15,7 +13,8 @@ class InvoiceProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _invoices = await _dbHelper.getInvoices();
+      // For now, we'll just use an empty list
+      _invoices = [];
     } catch (e) {
       debugPrint('Error loading invoices: $e');
     } finally {
@@ -24,9 +23,14 @@ class InvoiceProvider with ChangeNotifier {
     }
   }
 
+  void addInvoice(Invoice invoice) {
+    _invoices.add(invoice);
+    notifyListeners();
+  }
+
   Future<Invoice?> getInvoiceById(String id) async {
     try {
-      return await _dbHelper.getInvoiceById(id);
+      return _invoices.firstWhere((invoice) => invoice.id == id);
     } catch (e) {
       debugPrint('Error getting invoice: $e');
       return null;
@@ -35,7 +39,6 @@ class InvoiceProvider with ChangeNotifier {
 
   Future<bool> deleteInvoice(String id) async {
     try {
-      await _dbHelper.deleteInvoice(id);
       _invoices.removeWhere((invoice) => invoice.id == id);
       notifyListeners();
       return true;

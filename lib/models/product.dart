@@ -55,11 +55,11 @@ class Product {
   // Create Product from Map
   factory Product.fromMap(Map<String, dynamic> map) {
     return Product(
-      id: map['id'],
-      name: map['name'],
-      price: map['price'],
-      gstPercentage: map['gstPercentage'],
-      quantity: map['quantity'] ?? 1,
+      id: map['id'] as String,
+      name: map['name'] as String,
+      price: map['price'] as double,
+      gstPercentage: map['gstPercentage'] as double,
+      quantity: map['quantity'] != null ? map['quantity'] as int : 1,
     );
   }
 }

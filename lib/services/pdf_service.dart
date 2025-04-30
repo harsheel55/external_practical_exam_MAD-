@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
@@ -27,10 +28,23 @@ class PdfService {
       ),
     );
 
-    final output = await getTemporaryDirectory();
-    final file = File('${output.path}/invoice_${invoice.invoiceNumber}.pdf');
-    await file.writeAsBytes(await pdf.save());
-    return file;
+    try {
+      // For web platform, we need a different approach
+      if (kIsWeb) {
+        // For web, we can't use File, so we'll return a dummy file
+        // In a real app, you would use a different approach for web
+        throw UnsupportedError('PDF generation on web is not supported in this demo');
+      } else {
+        // For mobile/desktop platforms
+        final output = await getTemporaryDirectory();
+        final file = File('${output.path}/invoice_${invoice.invoiceNumber}.pdf');
+        await file.writeAsBytes(await pdf.save());
+        return file;
+      }
+    } catch (e) {
+      debugPrint('Error generating PDF: $e');
+      rethrow;
+    }
   }
 
   static pw.Widget _buildHeader(Invoice invoice) {
