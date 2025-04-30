@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import '../models/invoice.dart';
+import '../models/product.dart';
 import 'package:printing/printing.dart';
 import 'logo_util.dart';
 
@@ -199,7 +200,11 @@ class PdfService {
       'Total',
     ];
 
-    final data = invoice.products.map((product) {
+    // Sort products by GST percentage in descending order
+    final sortedProducts = List<Product>.from(invoice.products)
+      ..sort((a, b) => b.gstPercentage.compareTo(a.gstPercentage));
+
+    final data = sortedProducts.map((product) {
       return [
         product.name,
         '₹${product.price.toStringAsFixed(2)}',
