@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../models/invoice.dart';
+import '../services/database_helper.dart';
 
 class InvoiceProvider with ChangeNotifier {
+  final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Invoice> _invoices = [];
   bool _isLoading = false;
 
@@ -13,8 +15,7 @@ class InvoiceProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // For now, we'll just use an empty list
-      _invoices = [];
+      _invoices = await _dbHelper.getInvoices();
     } catch (e) {
       debugPrint('Error loading invoices: $e');
     } finally {
@@ -24,13 +25,18 @@ class InvoiceProvider with ChangeNotifier {
   }
 
   void addInvoice(Invoice invoice) {
-    _invoices.add(invoice);
-    notifyListeners();
+    // This method is used for in-memory operations
+    // When using SQLite, we should check if the invoice already exists
+    final existingIndex = _invoices.indexWhere((item) => item.id == invoice.id);
+    if (existingIndex == -1) {
+      _invoices.add(invoice);
+      notifyListeners();
+    }
   }
 
   Future<Invoice?> getInvoiceById(String id) async {
     try {
-      return _invoices.firstWhere((invoice) => invoice.id == id);
+      return await _dbHelper.getInvoiceById(id);
     } catch (e) {
       debugPrint('Error getting invoice: $e');
       return null;
@@ -39,9 +45,13 @@ class InvoiceProvider with ChangeNotifier {
 
   Future<bool> deleteInvoice(String id) async {
     try {
-      _invoices.removeWhere((invoice) => invoice.id == id);
-      notifyListeners();
-      return true;
+      final result = await _dbHelper.deleteInvoice(id);
+      if (result > 0) {
+        _invoices.removeWhere((invoice) => invoice.id == id);
+        notifyListeners();
+        return true;
+      }
+      return false;
     } catch (e) {
       debugPrint('Error deleting invoice: $e');
       return false;

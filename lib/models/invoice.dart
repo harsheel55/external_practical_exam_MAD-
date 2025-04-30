@@ -21,32 +21,30 @@ class Invoice {
         invoiceNumber = invoiceNumber ?? 'INV-${DateFormat('yyyyMMdd-HHmmss').format(DateTime.now())}',
         dateTime = dateTime ?? DateTime.now();
 
-  // Calculate subtotal (sum of all product prices without GST)
+  
   double get subtotal {
     return products.fold(0, (sum, product) => sum + (product.price * product.quantity));
   }
 
-  // Calculate total CGST
+  
   double get totalCGST {
     return products.fold(0, (sum, product) => sum + (product.cgst * product.quantity));
   }
 
-  // Calculate total SGST
+  
   double get totalSGST {
     return products.fold(0, (sum, product) => sum + (product.sgst * product.quantity));
   }
 
-  // Calculate total GST
   double get totalGST {
     return totalCGST + totalSGST;
   }
 
-  // Calculate grand total
   double get grandTotal {
     return products.fold(0, (sum, product) => sum + product.totalPriceWithQuantity);
   }
 
-  // Convert to Map for database operations
+  
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -61,7 +59,7 @@ class Invoice {
     };
   }
 
-  // Create Invoice from Map
+  
   factory Invoice.fromMap(Map<String, dynamic> map, List<Product> products) {
     return Invoice(
       id: map['id'],

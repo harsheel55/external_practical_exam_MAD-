@@ -13,19 +13,12 @@ class Product {
     this.quantity = 1,
   });
 
-  // Calculate CGST (Central Goods and Services Tax)
+  
   double get cgst => (price * gstPercentage / 100) / 2;
-
-  // Calculate SGST (State Goods and Services Tax)
   double get sgst => (price * gstPercentage / 100) / 2;
-
-  // Calculate total price including GST
   double get totalPrice => price + cgst + sgst;
-
-  // Calculate total price for the quantity
   double get totalPriceWithQuantity => totalPrice * quantity;
 
-  // Create a copy of the product with updated properties
   Product copyWith({
     String? id,
     String? name,

@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import '../models/product.dart';
 import '../models/invoice.dart';
+import '../services/database_helper.dart';
 
 class CartProvider with ChangeNotifier {
+  final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Product> _cartItems = [];
   String _customerName = '';
   String _customerPhone = '';
@@ -94,8 +96,8 @@ class CartProvider with ChangeNotifier {
   Future<String> saveInvoice() async {
     try {
       final invoice = await generateInvoice();
-      // For now, we're not saving to the database
-      return invoice.id;
+      final invoiceId = await _dbHelper.insertInvoice(invoice);
+      return invoiceId;
     } catch (e) {
       debugPrint('Error saving invoice: $e');
       rethrow;

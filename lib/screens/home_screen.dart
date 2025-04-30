@@ -9,19 +9,24 @@ import 'invoice_history_screen.dart';
 import 'add_product_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final int initialTabIndex;
+  
+  const HomeScreen({Key? key, this.initialTabIndex = 0}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
   final List<Widget> _screens = [];
   
   @override
   void initState() {
     super.initState();
+    // Initialize selected index from widget parameter
+    _selectedIndex = widget.initialTabIndex;
+    
     // Initialize screens
     _screens.addAll([
       const ProductScreen(),

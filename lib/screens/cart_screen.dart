@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/product.dart';
 import '../models/invoice.dart';
 import '../providers/cart_provider.dart';
 import '../providers/invoice_provider.dart';
 import '../services/pdf_service.dart';
 import 'package:share_plus/share_plus.dart';
+import 'home_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -209,24 +213,7 @@ class CartScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              try {
-                final pdfFile = await PdfService.generateInvoice(invoice);
-                if (!context.mounted) return;
-                
-                Share.shareXFiles(
-                  [XFile(pdfFile.path)],
-                  subject: 'Invoice ${invoice.invoiceNumber}',
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('PDF generation is not supported in web demo. Try on a mobile device.'),
-                    backgroundColor: Colors.orange,
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              }
+              await _sharePdf(context);
             },
             child: const Text('Share PDF'),
           ),
@@ -238,8 +225,15 @@ class CartScreen extends StatelessWidget {
               Navigator.pop(context);
               Provider.of<CartProvider>(context, listen: false).clearCart();
               
-              // Navigate to invoices tab
-              DefaultTabController.of(context)?.animateTo(2);
+              // Navigate to invoices tab - use a more reliable method
+              final scaffoldContext = ScaffoldMessenger.of(context).context;
+              if (scaffoldContext != null) {
+                Navigator.of(scaffoldContext).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const HomeScreen(initialTabIndex: 2),
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue.shade800,
@@ -250,6 +244,61 @@ class CartScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _sharePdf(BuildContext context) async {
+    try {
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      final invoiceId = await cartProvider.saveInvoice();
+      
+      final invoiceProvider = Provider.of<InvoiceProvider>(context, listen: false);
+      final invoice = await invoiceProvider.getInvoiceById(invoiceId);
+      
+      if (invoice != null) {
+        final pdfFile = await PdfService.generateInvoice(invoice);
+        
+        if (kIsWeb) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PDF generation on web is not supported in this demo')),
+          );
+        } else if (Platform.isWindows) {
+          // For Windows, just show a success message
+          // We don't use Share.shareXFiles as it may not work reliably on Windows
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Invoice saved successfully. PDF preview opened.'),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+          
+          // Try to open the file with the default application
+          try {
+            // This is handled by the printing package in PdfService
+            debugPrint('PDF generated at: ${pdfFile.path}');
+          } catch (e) {
+            debugPrint('Error opening PDF: $e');
+          }
+        } else {
+          // For mobile platforms
+          await Share.shareXFiles(
+            [XFile(pdfFile.path)],
+            subject: 'Invoice ${invoice.invoiceNumber}',
+          );
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invoice saved and shared successfully')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error sharing PDF: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error sharing PDF: ${e.toString()}'),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 }
 
